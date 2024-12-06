@@ -35,15 +35,17 @@ public class SecurityConfig {
         return source;
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for development
-            .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // Allow all requests (adjust as needed)
-            );
-
-        return http.build(); // Build the filter chain
-    }
+   @Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/posts/**").permitAll()  // Explicitly allow posts endpoints
+            .requestMatchers("/api/**").permitAll()    // Allow API endpoints if needed
+            .anyRequest().permitAll()
+        )
+        .headers(headers -> headers.frameOptions().disable());  // Add this for H2 console if needed
+    return http.build();
+}
 }

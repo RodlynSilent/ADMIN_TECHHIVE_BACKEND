@@ -7,13 +7,14 @@ import org.springframework.web.bind.annotation.*;
 import com.example.admin_backend.Entity.PostEntity;
 import com.example.admin_backend.Entity.CommentEntity;
 import com.example.admin_backend.Service.PostService;
+import org.springframework.http.MediaType;
+import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/posts")
-@CrossOrigin(origins = "http://localhost:3000")
 public class PostController {
 
     @Autowired
@@ -26,32 +27,42 @@ public class PostController {
             List<PostEntity> posts = postService.getAllPosts();
             return ResponseEntity.ok(posts);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     // Get visible posts only
-    @GetMapping("/visible")
-    public ResponseEntity<List<PostEntity>> getVisiblePosts() {
+ @GetMapping("/visible")
+public ResponseEntity<List<PostEntity>> getVisiblePosts() {
+    try {
+        System.out.println("==== START: getVisiblePosts ====");
+        System.out.println("PostService available: " + (postService != null));
+        
+        List<PostEntity> posts = null;
         try {
-            List<PostEntity> posts = postService.getAllVisiblePosts();
-            return ResponseEntity.ok(posts);
+            posts = postService.getAllVisiblePosts();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            System.err.println("Error in service layer:");
+            System.err.println("Error type: " + e.getClass().getName());
+            System.err.println("Error message: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
+        
+        System.out.println("Posts retrieved: " + (posts != null ? posts.size() : "null"));
+        return ResponseEntity.ok(posts);
+        
+    } catch (Exception e) {
+        System.err.println("==== ERROR in PostController.getVisiblePosts ====");
+        System.err.println("Error type: " + e.getClass().getName());
+        System.err.println("Error message: " + e.getMessage());
+        System.err.println("Stack trace:");
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                           .body(null);
     }
-
-    // Get post by ID
-    @GetMapping("/{postId}")
-    public ResponseEntity<PostEntity> getPostById(@PathVariable int postId) {
-        try {
-            return postService.getPostById(postId)
-                    .map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
+}
 
     // Create new post
     @PostMapping("/add")
@@ -68,8 +79,10 @@ public class PostController {
             PostEntity newPost = postService.createPost(post);
             return ResponseEntity.status(HttpStatus.CREATED).body(newPost);
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -83,8 +96,10 @@ public class PostController {
             PostEntity updatedPost = postService.updatePost(postId, postDetails);
             return ResponseEntity.ok(updatedPost);
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -103,6 +118,7 @@ public class PostController {
             PostEntity updatedPost = postService.updateVisibility(postId, isVisible);
             return ResponseEntity.ok(updatedPost);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -114,6 +130,7 @@ public class PostController {
             postService.softDeletePost(postId);
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -133,8 +150,10 @@ public class PostController {
             PostEntity updatedPost = postService.toggleLike(postId, userId, userRole.toUpperCase());
             return ResponseEntity.ok(updatedPost);
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -154,8 +173,10 @@ public class PostController {
             PostEntity updatedPost = postService.toggleDislike(postId, userId, userRole.toUpperCase());
             return ResponseEntity.ok(updatedPost);
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -167,6 +188,7 @@ public class PostController {
             List<CommentEntity> comments = postService.getCommentsByPostId(postId);
             return ResponseEntity.ok(comments);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -185,21 +207,35 @@ public class PostController {
             CommentEntity newComment = postService.addComment(comment, postId);
             return ResponseEntity.status(HttpStatus.CREATED).body(newComment);
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
 
-    // Error handling for unsupported operations
-    @ExceptionHandler(UnsupportedOperationException.class)
-    public ResponseEntity<?> handleUnsupportedOperation(UnsupportedOperationException e) {
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).build();
+    // Get all report posts
+    @GetMapping("/reports")
+    public ResponseEntity<List<PostEntity>> getAllReportPosts() {
+        try {
+            List<PostEntity> reportPosts = postService.getAllReportPosts();
+            return ResponseEntity.ok(reportPosts);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-    // Generic error handling
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGenericError(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    // Get report posts by status
+    @GetMapping("/reports/status/{status}")
+    public ResponseEntity<List<PostEntity>> getReportPostsByStatus(@PathVariable String status) {
+        try {
+            List<PostEntity> reportPosts = postService.getReportPostsByStatus(status);
+            return ResponseEntity.ok(reportPosts);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

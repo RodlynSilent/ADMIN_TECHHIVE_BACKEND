@@ -150,6 +150,40 @@ public class UserReportController {
                 .body(Map.of("error", "Failed to fetch resolved reports: " + e.getMessage()));
         }
     }
+
+@PutMapping("/{reportId}/status")
+public ResponseEntity<?> updateReportStatus(
+        @PathVariable int reportId,
+        @RequestBody Map<String, String> statusUpdate) {
+    try {
+        System.out.println("Updating status for report " + reportId + " to " + statusUpdate.get("status"));
+        
+        ReportEntity report = reportRepository.findById(reportId)
+            .orElseThrow(() -> new RuntimeException("Report not found"));
+        
+        ReportStatus newStatus = ReportStatus.valueOf(statusUpdate.get("status"));
+        report.setStatus(newStatus);
+        
+        // Set the statusUpdatedAt time
+        LocalDateTime now = LocalDateTime.now();
+        report.setStatusUpdatedAt(now);
+        
+        // If the new status is RESOLVED, set the resolvedAt time
+        if (newStatus == ReportStatus.RESOLVED) {
+            report.setResolvedAt(now);
+        }
+        
+        ReportEntity updatedReport = reportRepository.save(report);
+        System.out.println("Status updated successfully");
+        
+        return ResponseEntity.ok(updatedReport);
+    } catch (Exception e) {
+        System.err.println("Error updating status: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(Map.of("error", "Failed to update report status: " + e.getMessage()));
+    }
+}
+
 @PutMapping("/{id}/flag")
     public ResponseEntity<?> updateFlagStatus(@PathVariable int id, @RequestBody Map<String, Boolean> payload) {
         Boolean isFlagged = payload.get("isFlagged");
@@ -310,27 +344,6 @@ public class UserReportController {
         }
     }
 
-    @PutMapping("/{reportId}/status")
-    public ResponseEntity<?> updateReportStatus(
-            @PathVariable int reportId,
-            @RequestBody Map<String, String> statusUpdate) {
-        try {
-            System.out.println("Updating status for report " + reportId + " to " + statusUpdate.get("status"));
-            
-            ReportEntity report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Report not found"));
-            
-            report.setStatus(ReportStatus.valueOf(statusUpdate.get("status")));
-            ReportEntity updatedReport = reportRepository.save(report);
-            
-            System.out.println("Status updated successfully");
-            return ResponseEntity.ok(updatedReport);
-        } catch (Exception e) {
-            System.err.println("Error updating status: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Failed to update report status: " + e.getMessage()));
-        }
-    }
 
     private String saveImage(MultipartFile image) throws IOException {
         if (image == null || image.isEmpty()) {

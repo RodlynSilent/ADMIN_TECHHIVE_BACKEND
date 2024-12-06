@@ -27,7 +27,7 @@ public class ProfileEntity {
     private AdminEntity admin;
 
     @Lob
-    @Column(columnDefinition = "LONGBLOB")
+    @Column(name = "profile_picture")
     private byte[] profilePicture;
 
     // Default constructor

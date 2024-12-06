@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
 
 import com.example.admin_backend.Entity.ProfileEntity;
 import com.example.admin_backend.Entity.UserEntity;
@@ -21,6 +23,7 @@ import com.example.admin_backend.Service.ProfileService;
 @CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/profile")
 public class ProfileController {
+    
     @Autowired
     private ProfileService profileService;
     
@@ -33,85 +36,147 @@ public class ProfileController {
     @Autowired
     private ProfileRepository profileRepository;
 
-    // Upload Profile Picture for both User and Admin
+    private static final String DEFAULT_PROFILE_PATH = "src/main/resources/static/default.png";
+
+    // Upload Profile Picture
     @PostMapping("/{role}/uploadProfilePicture")
     public ResponseEntity<?> uploadProfilePicture(
             @PathVariable String role,
             @RequestParam("id") int id,
             @RequestParam("file") MultipartFile file) {
         
+        System.out.println("Uploading profile picture for " + role + " with ID: " + id);
+        
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body("File cannot be empty");
+            System.err.println("Upload failed: Empty file");
+            return new ResponseEntity<>("File cannot be empty", HttpStatus.BAD_REQUEST);
         }
 
         try {
             byte[] profilePicture = file.getBytes();
             ProfileEntity savedProfile;
             
-            if ("user".equalsIgnoreCase(role)) {
-                savedProfile = profileService.saveUserProfilePicture(id, profilePicture);
-            } else if ("admin".equalsIgnoreCase(role)) {
-                savedProfile = profileService.saveAdminProfilePicture(id, profilePicture);
-            } else {
-                return ResponseEntity.badRequest().body("Invalid role specified");
+            switch(role.toLowerCase()) {
+                case "user":
+                    savedProfile = profileService.saveUserProfilePicture(id, profilePicture);
+                    break;
+                case "admin":
+                    savedProfile = profileService.saveAdminProfilePicture(id, profilePicture);
+                    break;
+                default:
+                    System.err.println("Upload failed: Invalid role - " + role);
+                    return new ResponseEntity<>("Invalid role: " + role, HttpStatus.BAD_REQUEST);
             }
             
+            System.out.println("Profile picture uploaded successfully");
             return ResponseEntity.ok(savedProfile);
+        } catch (RuntimeException e) {
+            System.err.println("Upload failed: Entity not found - " + e.getMessage());
+            return new ResponseEntity<>("Entity not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("Failed to process file: " + e.getMessage());
+            System.err.println("Upload failed: File processing error - " + e.getMessage());
+            return new ResponseEntity<>("Failed to process file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // Get Profile Picture for both User and Admin
+    // Get Profile Picture
     @GetMapping("/{role}/getProfilePicture/{id}")
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable String role, @PathVariable int id) {
-        byte[] profilePicture = null;
+        System.out.println("Fetching profile picture for " + role + " with ID: " + id);
         
-        if ("user".equalsIgnoreCase(role)) {
-            UserEntity user = userRepository.findById(id).orElse(null);
-            if (user != null) {
-                ProfileEntity profile = profileRepository.findByUser(user);
-                if (profile != null && profile.getProfilePicture() != null) {
-                    profilePicture = profile.getProfilePicture();
+        try {
+            byte[] profilePicture = null;
+            
+            switch(role.toLowerCase()) {
+                case "user":
+                    profilePicture = profileService.getUserProfilePicture(id);
+                    break;
+                case "admin":
+                    profilePicture = profileService.getAdminProfilePicture(id);
+                    break;
+                default:
+                    System.err.println("Invalid role requested: " + role);
+                    return ResponseEntity.badRequest().build();
+            }
+
+            if (profilePicture == null) {
+                System.out.println("No profile picture found, attempting to load default");
+                Path defaultPath = Paths.get(DEFAULT_PROFILE_PATH);
+                if (Files.exists(defaultPath)) {
+                    profilePicture = Files.readAllBytes(defaultPath);
+                } else {
+                    System.err.println("Default profile picture not found");
+                    return ResponseEntity.notFound().build();
                 }
             }
-        } else if ("admin".equalsIgnoreCase(role)) {
-            AdminEntity admin = adminRepository.findById(id).orElse(null);
-            if (admin != null) {
-                ProfileEntity profile = profileRepository.findByAdmin(admin);
-                if (profile != null && profile.getProfilePicture() != null) {
-                    profilePicture = profile.getProfilePicture();
-                }
-            }
-        }
 
-        if (profilePicture == null) {
-            try {
-                Path path = Paths.get("public/default.png");
-                profilePicture = Files.readAllBytes(path);
-            } catch (IOException e) {
-                return ResponseEntity.internalServerError().build();
-            }
+            System.out.println("Profile picture retrieved successfully");
+            return ResponseEntity.ok()
+                .header("Content-Type", "image/jpeg")
+                .header("Cache-Control", "max-age=3600")
+                .body(profilePicture);
+                
+        } catch (IOException e) {
+            System.err.println("Error reading profile picture: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
-
-        return ResponseEntity.ok(profilePicture);
     }
 
     // Delete Profile Picture
-    @PostMapping("/{role}/deleteProfilePicture/{id}")
-    public ResponseEntity<String> deleteProfilePicture(@PathVariable String role, @PathVariable int id) {
+    @DeleteMapping("/{role}/profilePicture/{id}")
+    public ResponseEntity<?> deleteProfilePicture(@PathVariable String role, @PathVariable int id) {
+        System.out.println("Deleting profile picture for " + role + " with ID: " + id);
+        
         try {
-            if ("user".equalsIgnoreCase(role)) {
-                profileService.deleteUserProfilePicture(id);
-            } else if ("admin".equalsIgnoreCase(role)) {
-                profileService.deleteAdminProfilePicture(id);
-            } else {
-                return ResponseEntity.badRequest().body("Invalid role specified");
+            switch(role.toLowerCase()) {
+                case "user":
+                    profileService.deleteUserProfilePicture(id);
+                    break;
+                case "admin":
+                    profileService.deleteAdminProfilePicture(id);
+                    break;
+                default:
+                    System.err.println("Delete failed: Invalid role - " + role);
+                    return new ResponseEntity<>("Invalid role: " + role, HttpStatus.BAD_REQUEST);
             }
             
-            return ResponseEntity.ok("Profile picture deleted successfully");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error deleting profile picture: " + e.getMessage());
+            System.out.println("Profile picture deleted successfully");
+            return new ResponseEntity<>("Profile picture deleted successfully", HttpStatus.OK);
+        } catch (RuntimeException e) {
+            System.err.println("Delete failed: Entity not found - " + e.getMessage());
+            return new ResponseEntity<>("Entity not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // Get Profile Details
+    @GetMapping("/{role}/details/{id}")
+    public ResponseEntity<?> getProfileDetails(@PathVariable String role, @PathVariable int id) {
+        System.out.println("Fetching profile details for " + role + " with ID: " + id);
+        
+        try {
+            ProfileEntity profile;
+            switch(role.toLowerCase()) {
+                case "user":
+                    profile = profileService.getUserProfile(id);
+                    break;
+                case "admin":
+                    profile = profileService.getAdminProfile(id);
+                    break;
+                default:
+                    System.err.println("Invalid role requested: " + role);
+                    return new ResponseEntity<>("Invalid role: " + role, HttpStatus.BAD_REQUEST);
+            }
+
+            if (profile == null) {
+                System.err.println("Profile not found");
+                return ResponseEntity.notFound().build();
+            }
+
+            System.out.println("Profile details retrieved successfully");
+            return ResponseEntity.ok(profile);
+        } catch (RuntimeException e) {
+            System.err.println("Error fetching profile details: " + e.getMessage());
+            return new ResponseEntity<>("Entity not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
 }

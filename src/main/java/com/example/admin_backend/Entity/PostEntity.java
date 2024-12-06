@@ -4,45 +4,63 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "tblpost")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PostEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "post_id")
     private int postId;
     
+    @Column(columnDefinition = "varchar(500)")
     private String content;
+    
     private LocalDateTime timestamp;
+    
+    @Column(name = "user_id")
     private Integer userId;
+    
+    @Column(name = "admin_id")
     private Integer adminId;
+    
+    @Column(name = "superuser_id")
     private Integer superUserId;
+    
+    @Column(name = "user_role")
     private String userRole;
     
     @Column(name = "isverified")
-    private boolean isVerified;
+    private Boolean isVerified = false;
     
     @Column(name = "is_visible")
-    private boolean visible = true;
+    private boolean isVisible = true;
     
     private int likes;
     private int dislikes;
+    
+    @Column(name = "fullname")
     private String fullName;
+    
+    @Column(name = "idnumber")
     private String idNumber;
     
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ProfileEntity profile;
     
     @Column(columnDefinition = "LONGTEXT")
     private String image;
     
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "post_likes", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "user_id")
     private Set<Integer> likedBy = new HashSet<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "post_dislikes", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "user_id")
     private Set<Integer> dislikedBy = new HashSet<>();
@@ -50,13 +68,21 @@ public class PostEntity {
     @Column(name = "is_deleted")
     private boolean isDeleted = false;
     
+    @Column(name = "is_submitted_report")
     private Boolean isSubmittedReport = false;
+    
     private String status;
+    
+    @Column(name = "admin_notes")
     private String adminNotes;
+    
+    @Column(name = "last_modified_by")
     private Integer lastModifiedBy;
+    
+    @Column(name = "last_modified_at")
     private LocalDateTime lastModifiedAt;
 
-    // Getters and Setters
+    // Getters and Setters remain the same
     public int getPostId() { return postId; }
     public void setPostId(int postId) { this.postId = postId; }
 
@@ -78,11 +104,11 @@ public class PostEntity {
     public String getUserRole() { return userRole; }
     public void setUserRole(String userRole) { this.userRole = userRole; }
 
-    public boolean isVerified() { return isVerified; }
-    public void setVerified(boolean verified) { isVerified = verified; }
+    public Boolean isVerified() { return isVerified; }
+    public void setVerified(Boolean verified) { isVerified = verified; }
 
-    public boolean isVisible() { return visible; }
-    public void setVisible(boolean visible) { this.visible = visible; }
+    public boolean isVisible() { return isVisible; }
+    public void setVisible(boolean isVisible) { this.isVisible = isVisible; }
 
     public int getLikes() { return likes; }
     public void setLikes(int likes) { this.likes = likes; }
@@ -112,7 +138,7 @@ public class PostEntity {
     public void setDeleted(boolean deleted) { isDeleted = deleted; }
 
     public Boolean getIsSubmittedReport() { return isSubmittedReport; }
-    public void setIsSubmittedReport(Boolean submittedReport) { isSubmittedReport = submittedReport; }
+    public void setIsSubmittedReport(Boolean submittedReport) { this.isSubmittedReport = submittedReport; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -134,6 +160,7 @@ public class PostEntity {
                 ", timestamp=" + timestamp +
                 ", userId=" + userId +
                 ", isVerified=" + isVerified +
+                ", isVisible=" + isVisible +
                 ", likes=" + likes +
                 ", dislikes=" + dislikes +
                 ", fullName='" + fullName + '\'' +
