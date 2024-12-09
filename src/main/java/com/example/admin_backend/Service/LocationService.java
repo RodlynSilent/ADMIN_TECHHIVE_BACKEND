@@ -22,8 +22,10 @@ public class LocationService {
     @Autowired
     private BuildingService buildingService;
 
-    private final double DISTANCE_THRESHOLD = 200.0; // 200 meters threshold for being inside CIT-U campus
-
+    private static final double DISTANCE_THRESHOLD = 500.0; // 500 meters threshold
+    
+    private static final String DEFAULT_BUILDING = "CIT-U College Library";
+    
     // Save the user's location by passing the user's idNumber manually
     public LocationEntity saveUserLocation(Double latitude, Double longitude, String idNumber, String buildingName) {
         // Fetch the user by idNumber
@@ -42,25 +44,35 @@ public class LocationService {
     
     // Method to find the nearest building based on latitude and longitude
     public String findNearestBuilding(Double userLat, Double userLng) {
+        // Return library if no coordinates provided
         if (userLat == null || userLng == null) {
-            return "Unknown";
+            return DEFAULT_BUILDING;
         }
         
         List<BuildingEntity> buildings = buildingService.getAllBuildings();
-        String nearestBuilding = "Unknown";
+        String nearestBuilding = DEFAULT_BUILDING;  // Default to library
         double shortestDistance = Double.MAX_VALUE;
 
         for (BuildingEntity building : buildings) {
+            // Skip buildings with null coordinates
+            if (building.getLatitude() == null || building.getLongitude() == null) {
+                continue;
+            }
+
             double distance = calculateDistance(userLat, userLng, building.getLatitude(), building.getLongitude());
+            // Debug logging
+            System.out.println("Building: " + building.getBuildingName() + ", Distance: " + distance + " meters");
+            
             if (distance < shortestDistance) {
                 shortestDistance = distance;
                 nearestBuilding = building.getBuildingName();
             }
         }
 
-        // Return "Outside Campus" if the nearest building is beyond the threshold
+        // Fallback to library if distance exceeds threshold
         if (shortestDistance > DISTANCE_THRESHOLD) {
-            return "Outside Campus";
+            System.out.println("Location not precisely detected. Falling back to library.");
+            return DEFAULT_BUILDING;
         }
 
         return nearestBuilding;
