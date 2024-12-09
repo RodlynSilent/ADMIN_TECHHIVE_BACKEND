@@ -4,86 +4,56 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "tblpost")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PostEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "post_id")
     private int postId;
     
-    @Column(columnDefinition = "varchar(500)")
     private String content;
-    
     private LocalDateTime timestamp;
-    
-    @Column(name = "user_id")
     private Integer userId;
-    
-    @Column(name = "admin_id")
     private Integer adminId;
-    
-    @Column(name = "superuser_id")
     private Integer superUserId;
-    
-    @Column(name = "user_role")
     private String userRole;
     
     @Column(name = "isverified")
-    private Boolean isVerified = false;
+    private boolean isVerified;
     
     @Column(name = "is_visible")
-    private Boolean isVisible = true;
+    private boolean visible = true;
     
-    private Integer likes;
-    private Integer dislikes;
+    private int likes;
+    private int dislikes;
+    private String fullName;
+    private String idNumber;
     
-    @Column(name = "fullname")
-    private String fullname;
-    
-    @Column(name = "idnumber")
-    private String idnumber;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "profile_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ProfileEntity profile;
     
     @Column(columnDefinition = "LONGTEXT")
     private String image;
     
-   @ElementCollection
-@CollectionTable(name = "post_liked_by", joinColumns = @JoinColumn(name = "post_id"))
-@Column(name = "user_id")
-private Set<Integer> likedBy = new HashSet<>();
+    @ElementCollection
+    @CollectionTable(name = "post_likes", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "user_id")
+    private Set<Integer> likedBy = new HashSet<>();
 
-@ElementCollection
-@CollectionTable(name = "post_disliked_by", joinColumns = @JoinColumn(name = "post_id"))
-@Column(name = "user_id")
-private Set<Integer> dislikedBy = new HashSet<>();
+    @ElementCollection
+    @CollectionTable(name = "post_dislikes", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "user_id")
+    private Set<Integer> dislikedBy = new HashSet<>();
     
     @Column(name = "is_deleted")
     private boolean isDeleted = false;
     
-    @Column(name = "is_submitted_report")
-    private Boolean isSubmittedReport;
-    
-    @Column(name = "status")
+    private Boolean isSubmittedReport = false;
     private String status;
-    
-    @Column(name = "admin_notes")
     private String adminNotes;
-
-    @Column(name = "reportid")
-    private Integer reportId;
-    
-    @Column(name = "last_modified_by")
     private Integer lastModifiedBy;
-    
-    @Column(name = "last_modified_at")
     private LocalDateTime lastModifiedAt;
 
     // Getters and Setters
@@ -116,13 +86,6 @@ private Set<Integer> dislikedBy = new HashSet<>();
 
     public int getLikes() { return likes; }
     public void setLikes(int likes) { this.likes = likes; }
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
-    public Integer getAdminId() {
-        return adminId;
-    }
 
     public int getDislikes() { return dislikes; }
     public void setDislikes(int dislikes) { this.dislikes = dislikes; }
@@ -150,13 +113,6 @@ private Set<Integer> dislikedBy = new HashSet<>();
 
     public Boolean getIsSubmittedReport() { return isSubmittedReport; }
     public void setIsSubmittedReport(Boolean submittedReport) { isSubmittedReport = submittedReport; }
-    public void setIsVerified(Boolean verified) {
-        this.isVerified = verified;
-    }
-
-    public boolean isVisible() {
-        return isVisible;
-    }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -178,7 +134,6 @@ private Set<Integer> dislikedBy = new HashSet<>();
                 ", timestamp=" + timestamp +
                 ", userId=" + userId +
                 ", isVerified=" + isVerified +
-                ", isVisible=" + isVisible +
                 ", likes=" + likes +
                 ", dislikes=" + dislikes +
                 ", fullName='" + fullName + '\'' +
