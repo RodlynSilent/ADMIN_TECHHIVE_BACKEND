@@ -13,9 +13,6 @@ import com.example.admin_backend.Entity.ReportStatus;
 
 public interface ReportRepository extends JpaRepository<ReportEntity, Integer> {
     // Basic CRUD operations are inherited from JpaRepository
-
-    Optional<ReportEntity> findByPostId(Integer postId);
-    
    Optional<ReportEntity> findByReportId(int reportId);
 
     // Status-based queries
