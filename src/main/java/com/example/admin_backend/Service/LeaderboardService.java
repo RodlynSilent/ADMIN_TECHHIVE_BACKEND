@@ -28,11 +28,23 @@ public class LeaderboardService {
         UserEntity user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User not found"));
 
+<<<<<<< HEAD
         LeaderboardEntity leaderboardEntry = new LeaderboardEntity();
         leaderboardEntry.setUser(user);
         leaderboardEntry.setPoints(points);
         leaderboardEntry.setAchievedAt(LocalDateTime.now());
         leaderboardEntry.setUserRank(0);  // Rank will be updated later
+=======
+            // Set initial user points
+            user.setPoints(points);
+            userRepository.save(user);
+
+            LeaderboardEntity leaderboardEntry = new LeaderboardEntity();
+            leaderboardEntry.setUser(user);
+            leaderboardEntry.setPoints(points);
+            leaderboardEntry.setAchievedAt(LocalDateTime.now());
+            leaderboardEntry.setUserRank(0);
+>>>>>>> Meow
 
         leaderboardRepository.save(leaderboardEntry);
         updateLeaderboardRanks(); // Auto-update leaderboard ranks
@@ -44,11 +56,30 @@ public class LeaderboardService {
         LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
             .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found for user"));
 
+<<<<<<< HEAD
         leaderboardEntry.setPoints(leaderboardEntry.getPoints() + points);
         leaderboardEntry.setAchievedAt(LocalDateTime.now());
 
         leaderboardRepository.save(leaderboardEntry);
         updateLeaderboardRanks(); // Auto-update leaderboard ranks
+=======
+            // Update user points
+            user.addPoints(points);
+            userRepository.save(user);
+
+            LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
+                .orElseGet(() -> {
+                    LeaderboardEntity newEntry = new LeaderboardEntity();
+                    newEntry.setUser(user);
+                    newEntry.setPoints(0);
+                    newEntry.setUserRank(0);
+                    newEntry.setAchievedAt(LocalDateTime.now());
+                    return newEntry;
+                });
+
+            leaderboardEntry.setPoints(user.getPoints());  // Sync with user points
+            leaderboardEntry.setAchievedAt(LocalDateTime.now());
+>>>>>>> Meow
 
         return leaderboardEntry;
     }
@@ -64,11 +95,30 @@ public class LeaderboardService {
         LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
             .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found for user"));
 
+<<<<<<< HEAD
         leaderboardEntry.setPoints(Math.max(leaderboardEntry.getPoints() - points, 0)); // Prevent points from going below 0
         leaderboardEntry.setAchievedAt(LocalDateTime.now());
 
         leaderboardRepository.save(leaderboardEntry);
         updateLeaderboardRanks(); // Auto-update leaderboard ranks
+=======
+            // Update user points
+            user.subtractPoints(points);
+            userRepository.save(user);
+
+            LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
+                .orElseGet(() -> {
+                    LeaderboardEntity newEntry = new LeaderboardEntity();
+                    newEntry.setUser(user);
+                    newEntry.setPoints(0);
+                    newEntry.setUserRank(0);
+                    newEntry.setAchievedAt(LocalDateTime.now());
+                    return newEntry;
+                });
+
+            leaderboardEntry.setPoints(user.getPoints());  // Sync with user points
+            leaderboardEntry.setAchievedAt(LocalDateTime.now());
+>>>>>>> Meow
 
         return leaderboardEntry;
     }
@@ -91,7 +141,103 @@ public class LeaderboardService {
         }
     }
 
+<<<<<<< HEAD
     // Helper method to determine badge based on points
+=======
+    // Methods for handling likes/dislikes
+    @Transactional
+    public LeaderboardEntity handleAdminLike(int userId) {
+        try {
+            UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+            
+            user.addLikePoints();
+            userRepository.save(user);
+
+            LeaderboardEntity leaderboard = leaderboardRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found"));
+            
+            leaderboard.setPoints(user.getPoints());
+            leaderboard.setAchievedAt(LocalDateTime.now());
+            
+            LeaderboardEntity savedEntry = leaderboardRepository.save(leaderboard);
+            updateLeaderboardRanks();
+            return savedEntry;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to handle admin like", e);
+        }
+    }
+
+    @Transactional
+    public LeaderboardEntity handleAdminDislike(int userId) {
+        try {
+            UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+            
+            user.addDislikePoints();
+            userRepository.save(user);
+
+            LeaderboardEntity leaderboard = leaderboardRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found"));
+            
+            leaderboard.setPoints(user.getPoints());
+            leaderboard.setAchievedAt(LocalDateTime.now());
+            
+            LeaderboardEntity savedEntry = leaderboardRepository.save(leaderboard);
+            updateLeaderboardRanks();
+            return savedEntry;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to handle admin dislike", e);
+        }
+    }
+
+    @Transactional
+    public LeaderboardEntity removeAdminLike(int userId) {
+        try {
+            UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+            
+            user.removeLikePoints();
+            userRepository.save(user);
+
+            LeaderboardEntity leaderboard = leaderboardRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found"));
+            
+            leaderboard.setPoints(user.getPoints());
+            leaderboard.setAchievedAt(LocalDateTime.now());
+            
+            LeaderboardEntity savedEntry = leaderboardRepository.save(leaderboard);
+            updateLeaderboardRanks();
+            return savedEntry;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to remove admin like", e);
+        }
+    }
+
+    @Transactional
+    public LeaderboardEntity removeAdminDislike(int userId) {
+        try {
+            UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+            
+            user.removeDislikePoints();
+            userRepository.save(user);
+
+            LeaderboardEntity leaderboard = leaderboardRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found"));
+            
+            leaderboard.setPoints(user.getPoints());
+            leaderboard.setAchievedAt(LocalDateTime.now());
+            
+            LeaderboardEntity savedEntry = leaderboardRepository.save(leaderboard);
+            updateLeaderboardRanks();
+            return savedEntry;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to remove admin dislike", e);
+        }
+    }
+
+>>>>>>> Meow
     public String getBadge(int points) {
         if (points >= 100) {
             return "Champion";
