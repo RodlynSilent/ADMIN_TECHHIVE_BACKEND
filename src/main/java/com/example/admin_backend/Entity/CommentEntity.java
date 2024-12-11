@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Table(name = "tblcomment")
@@ -22,9 +21,8 @@ public class CommentEntity {
     @Column(name = "content", nullable = false)
     private String content;
 
-  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "Asia/Manila")
-@Column(name = "timestamp")
-private LocalDateTime timestamp;
+    @Column(name = "timestamp")
+    private LocalDateTime timestamp;
 
     @Column(name = "post_id", nullable = false)
     private int postId;

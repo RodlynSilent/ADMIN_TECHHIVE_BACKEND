@@ -17,9 +17,6 @@ public class SuperUserEntity {
     @Column(name = "superuserid", nullable = false, updatable = false)
     private int superUserId;
 
-    @Column(name = "idnumber")
-    private String idNumber;
-
     @Column(name = "superusername", nullable = false, unique = true)
     private String superUsername;
 
@@ -54,14 +51,6 @@ public class SuperUserEntity {
 
     public void setSuperUserId(int superUserId) {
         this.superUserId = superUserId;
-    }
-
-    public String getIdNumber() {
-        return idNumber;
-    }
-
-    public void setIdNumber(String idNumber) {
-        this.idNumber = idNumber;
     }
 
     public String getSuperUsername() {

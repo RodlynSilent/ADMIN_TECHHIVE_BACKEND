@@ -49,12 +49,11 @@ public class SuperUserService {
     }
 
     // Create new SuperUser with hashed password
-   @Transactional
-public SuperUserEntity insertSuperUser(SuperUserEntity superuser) {
-    // Encrypt the password before saving
-    superuser.setSuperUserPassword(encoder.encode(superuser.getSuperUserPassword()));
-    return superUserRepository.save(superuser);
-}
+    @Transactional
+    public SuperUserEntity insertSuperUser(SuperUserEntity superuser) {
+        superuser.setSuperUserPassword(encoder.encode(superuser.getSuperUserPassword()));
+        return superUserRepository.save(superuser);
+    }
 
     public List<SuperUserEntity> getAllSuperUsers() {
         return superUserRepository.findAll();
