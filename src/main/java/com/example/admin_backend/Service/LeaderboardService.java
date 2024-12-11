@@ -28,23 +28,15 @@ public class LeaderboardService {
         UserEntity user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User not found"));
 
-<<<<<<< HEAD
+        // Set initial user points
+        user.setPoints(points);
+        userRepository.save(user);
+
         LeaderboardEntity leaderboardEntry = new LeaderboardEntity();
         leaderboardEntry.setUser(user);
         leaderboardEntry.setPoints(points);
         leaderboardEntry.setAchievedAt(LocalDateTime.now());
-        leaderboardEntry.setUserRank(0);  // Rank will be updated later
-=======
-            // Set initial user points
-            user.setPoints(points);
-            userRepository.save(user);
-
-            LeaderboardEntity leaderboardEntry = new LeaderboardEntity();
-            leaderboardEntry.setUser(user);
-            leaderboardEntry.setPoints(points);
-            leaderboardEntry.setAchievedAt(LocalDateTime.now());
-            leaderboardEntry.setUserRank(0);
->>>>>>> Meow
+        leaderboardEntry.setUserRank(0);
 
         leaderboardRepository.save(leaderboardEntry);
         updateLeaderboardRanks(); // Auto-update leaderboard ranks
@@ -53,35 +45,27 @@ public class LeaderboardService {
     // Add points to the leaderboard for a user
     @Transactional
     public LeaderboardEntity addPoints(int userId, int points) {
-        LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
-            .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found for user"));
+        UserEntity user = userRepository.findById(userId)
+            .orElseThrow(() -> new NoSuchElementException("User not found"));
 
-<<<<<<< HEAD
-        leaderboardEntry.setPoints(leaderboardEntry.getPoints() + points);
+        // Update user points
+        user.addPoints(points);
+        userRepository.save(user);
+
+        LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
+            .orElseGet(() -> {
+                LeaderboardEntity newEntry = new LeaderboardEntity();
+                newEntry.setUser(user);
+                newEntry.setPoints(0);
+                newEntry.setUserRank(0);
+                newEntry.setAchievedAt(LocalDateTime.now());
+                return newEntry;
+            });
+
+        leaderboardEntry.setPoints(user.getPoints());  // Sync with user points
         leaderboardEntry.setAchievedAt(LocalDateTime.now());
 
-        leaderboardRepository.save(leaderboardEntry);
-        updateLeaderboardRanks(); // Auto-update leaderboard ranks
-=======
-            // Update user points
-            user.addPoints(points);
-            userRepository.save(user);
-
-            LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
-                .orElseGet(() -> {
-                    LeaderboardEntity newEntry = new LeaderboardEntity();
-                    newEntry.setUser(user);
-                    newEntry.setPoints(0);
-                    newEntry.setUserRank(0);
-                    newEntry.setAchievedAt(LocalDateTime.now());
-                    return newEntry;
-                });
-
-            leaderboardEntry.setPoints(user.getPoints());  // Sync with user points
-            leaderboardEntry.setAchievedAt(LocalDateTime.now());
->>>>>>> Meow
-
-        return leaderboardEntry;
+        return leaderboardRepository.save(leaderboardEntry);
     }
 
     // Get leaderboard rankings (sorted by points and time of achievement)
@@ -92,41 +76,25 @@ public class LeaderboardService {
     // Subtract points from the leaderboard for a user
     @Transactional
     public LeaderboardEntity subtractPoints(int userId, int points) {
+        UserEntity user = userRepository.findById(userId)
+            .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+        user.addPoints(-points);  // Subtract points
+        userRepository.save(user);
+
         LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
             .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found for user"));
 
-<<<<<<< HEAD
-        leaderboardEntry.setPoints(Math.max(leaderboardEntry.getPoints() - points, 0)); // Prevent points from going below 0
+        leaderboardEntry.setPoints(user.getPoints());  // Sync with user points
         leaderboardEntry.setAchievedAt(LocalDateTime.now());
 
-        leaderboardRepository.save(leaderboardEntry);
-        updateLeaderboardRanks(); // Auto-update leaderboard ranks
-=======
-            // Update user points
-            user.subtractPoints(points);
-            userRepository.save(user);
-
-            LeaderboardEntity leaderboardEntry = leaderboardRepository.findByUser_UserId(userId)
-                .orElseGet(() -> {
-                    LeaderboardEntity newEntry = new LeaderboardEntity();
-                    newEntry.setUser(user);
-                    newEntry.setPoints(0);
-                    newEntry.setUserRank(0);
-                    newEntry.setAchievedAt(LocalDateTime.now());
-                    return newEntry;
-                });
-
-            leaderboardEntry.setPoints(user.getPoints());  // Sync with user points
-            leaderboardEntry.setAchievedAt(LocalDateTime.now());
->>>>>>> Meow
-
-        return leaderboardEntry;
+        return leaderboardRepository.save(leaderboardEntry);
     }
 
     // Get a specific user's leaderboard entry
     public LeaderboardEntity getLeaderboardEntryByUserId(int userId) {
         return leaderboardRepository.findByUser_UserId(userId)
-            .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found for user"));
+            .orElseThrow(() -> new NoSuchElementException("Leaderboard entry not found"));
     }
 
     // Method to automatically update leaderboard ranks
@@ -141,9 +109,6 @@ public class LeaderboardService {
         }
     }
 
-<<<<<<< HEAD
-    // Helper method to determine badge based on points
-=======
     // Methods for handling likes/dislikes
     @Transactional
     public LeaderboardEntity handleAdminLike(int userId) {
@@ -151,7 +116,7 @@ public class LeaderboardService {
             UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User not found"));
             
-            user.addLikePoints();
+            user.addLikePoints();  // Assuming this method exists in UserEntity
             userRepository.save(user);
 
             LeaderboardEntity leaderboard = leaderboardRepository.findByUser_UserId(userId)
@@ -237,7 +202,6 @@ public class LeaderboardService {
         }
     }
 
->>>>>>> Meow
     public String getBadge(int points) {
         if (points >= 100) {
             return "Champion";

@@ -3,7 +3,7 @@ package com.example.admin_backend.Service;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +16,9 @@ import com.example.admin_backend.Repository.*;
 public class PostService {
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private ReportRepository reportRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -33,14 +36,11 @@ public class PostService {
     private ProfileRepository profileRepository;
 
     @Autowired
-<<<<<<< HEAD
-    @SuppressWarnings("unused")
-=======
-    private ReportRepository reportRepository;
-
-    @Autowired
->>>>>>> Meow
     private LeaderboardService leaderboardService;
+
+    public PostService(ReportRepository reportRepository) {
+        this.reportRepository = reportRepository;
+    }
 
     // Get all posts
     public List<PostEntity> getAllPosts() {
@@ -49,14 +49,10 @@ public class PostService {
 
     // Get only visible posts
     public List<PostEntity> getAllVisiblePosts() {
-        return postRepository.findByIsDeletedFalseAndVisibleTrue();
+        return postRepository.findByIsDeletedFalseAndIsVisibleTrue();
     }
 
     // Get post by ID
-<<<<<<< HEAD
-    public Optional<PostEntity> getPostById(int postId) {
-        return postRepository.findByPostIdAndIsDeletedFalse(postId);
-=======
    // In PostService.java
 public PostEntity getPostById(int postId) {
     try {
@@ -66,40 +62,16 @@ public PostEntity getPostById(int postId) {
     } catch (Exception e) {
         System.err.println("Error fetching post by ID: " + e.getMessage());
         throw new RuntimeException("Error fetching post", e);
->>>>>>> Meow
     }
 }
 
     // Create new post
-<<<<<<< HEAD
-    @Transactional
-    public PostEntity createPost(PostEntity post) {
-        if (post.getContent() == null && post.getImage() == null) {
-            throw new IllegalArgumentException("Post must have either content or an image");
-        }
-
-        post.setTimestamp(LocalDateTime.now());
-        post.setDeleted(false);
-        post.setLikedBy(new HashSet<>());
-        post.setDislikedBy(new HashSet<>());
-        
-        switch (post.getUserRole().toUpperCase()) {
-            case "USER":
-                return createUserPost(post);
-            case "ADMIN":
-                return createAdminPost(post);
-            case "SUPERUSER":
-                return createSuperUserPost(post);
-            default:
-                throw new IllegalArgumentException("Invalid user role");
-=======
    @Transactional
 public PostEntity createPost(PostEntity post) {
     try {
         System.out.println("Creating new post");
         if (post.getContent() == null && post.getImage() == null) {
             throw new IllegalArgumentException("Post must have either content or an image");
->>>>>>> Meow
         }
 
         post.setTimestamp(LocalDateTime.now());
@@ -144,16 +116,6 @@ post.setDislikedBy(new HashSet<String>()); // Initialize empty Set<String>      
         UserEntity user = userRepository.findById(post.getUserId())
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-<<<<<<< HEAD
-       // Ensure user points are not null and handle it
-       user.setPoints(Math.max(user.getPoints(), 0)); // Reset points to default if less than 0
-    
-       post.setFullName(user.getFullName());
-       post.setProfile(profileRepository.findByUser(user)); // Fetch profile
-       post.setTimestamp(LocalDateTime.now());
-       post.setIsSubmittedReport(post.getIsSubmittedReport()); 
-       post.setDeleted(false);
-=======
         user.setPoints(Math.max(user.getPoints(), 0));
         
         post.setFullName(user.getFullName());
@@ -162,7 +124,6 @@ post.setDislikedBy(new HashSet<String>()); // Initialize empty Set<String>      
         post.setTimestamp(LocalDateTime.now());
         post.setIsSubmittedReport(post.getIsSubmittedReport()); 
         post.setDeleted(false);
->>>>>>> Meow
         
         return postRepository.save(post);
     }
@@ -242,108 +203,6 @@ post.setDislikedBy(new HashSet<String>()); // Initialize empty Set<String>      
         }
     }
 
-<<<<<<< HEAD
-    // Like/Dislike functionality
-    @Transactional
-    public PostEntity toggleLike(int postId, int userId, String userRole) {
-        PostEntity post = postRepository.findByPostIdAndIsDeletedFalse(postId)
-            .orElseThrow(() -> new RuntimeException("Post not found"));
-
-        boolean isAdminOrSuperuser = "ADMIN".equalsIgnoreCase(userRole) || 
-                                   "SUPERUSER".equalsIgnoreCase(userRole);
-
-        if (post.getLikedBy() == null) {
-            post.setLikedBy(new HashSet<>());
-        }
-        if (post.getDislikedBy() == null) {
-            post.setDislikedBy(new HashSet<>());
-        }
-
-        boolean isOwnPost = userId == post.getUserId();
-        boolean hasLiked = post.getLikedBy().contains(userId);
-        boolean hasDisliked = post.getDislikedBy().contains(userId);
-
-        if (hasLiked) {
-            // Remove like
-            post.getLikedBy().remove(userId);
-            post.setLikes(post.getLikes() - 1);
-            if (!isOwnPost && !isAdminOrSuperuser) {
-                updateUserPoints(post.getUserId(), -1);
-            }
-        } else {
-            // Handle dislike if exists
-            if (hasDisliked) {
-                post.getDislikedBy().remove(userId);
-                post.setDislikes(post.getDislikes() - 1);
-                if (!isOwnPost && !isAdminOrSuperuser) {
-                    updateUserPoints(post.getUserId(), 1);
-                }
-            }
-            // Add like
-            post.getLikedBy().add(userId);
-            post.setLikes(post.getLikes() + 1);
-            if (!isOwnPost && !isAdminOrSuperuser) {
-                updateUserPoints(post.getUserId(), 1);
-            }
-        }
-
-        return postRepository.save(post);
-    }
-
-    @Transactional
-    public PostEntity toggleDislike(int postId, int userId, String userRole) {
-        PostEntity post = postRepository.findByPostIdAndIsDeletedFalse(postId)
-            .orElseThrow(() -> new RuntimeException("Post not found"));
-
-        boolean isAdminOrSuperuser = "ADMIN".equalsIgnoreCase(userRole) || 
-                                   "SUPERUSER".equalsIgnoreCase(userRole);
-
-        if (post.getLikedBy() == null) {
-            post.setLikedBy(new HashSet<>());
-        }
-        if (post.getDislikedBy() == null) {
-            post.setDislikedBy(new HashSet<>());
-        }
-
-        boolean isOwnPost = userId == post.getUserId();
-        boolean hasLiked = post.getLikedBy().contains(userId);
-        boolean hasDisliked = post.getDislikedBy().contains(userId);
-
-        if (hasDisliked) {
-            // Remove dislike
-            post.getDislikedBy().remove(userId);
-            post.setDislikes(post.getDislikes() - 1);
-            if (!isOwnPost && !isAdminOrSuperuser) {
-                updateUserPoints(post.getUserId(), 1);
-            }
-        } else {
-            // Handle like if exists
-            if (hasLiked) {
-                post.getLikedBy().remove(userId);
-                post.setLikes(post.getLikes() - 1);
-                if (!isOwnPost && !isAdminOrSuperuser) {
-                    updateUserPoints(post.getUserId(), -1);
-                }
-            }
-            // Add dislike
-            post.getDislikedBy().add(userId);
-            post.setDislikes(post.getDislikes() + 1);
-            if (!isOwnPost && !isAdminOrSuperuser) {
-                updateUserPoints(post.getUserId(), -1);
-            }
-
-            // Check for auto-deletion threshold for user posts
-            if ("USER".equalsIgnoreCase(post.getUserRole()) && post.getDislikes() >= 50) {
-                softDeletePost(postId);
-                return post;
-            }
-        }
-
-        return postRepository.save(post);
-    }
-
-    // Post visibility
-=======
     // Like/Dislike handling
   @Transactional
 public PostEntity handleLike(Integer postId, Integer userId, String userRole) {
@@ -460,7 +319,6 @@ public PostEntity handleDislike(Integer postId, Integer userId, String userRole)
     }
 
     // Visibility and Delete operations
->>>>>>> Meow
     public PostEntity updateVisibility(int postId, boolean newVisibility) {
         PostEntity post = postRepository.findById(postId)
             .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -478,35 +336,6 @@ public PostEntity handleDislike(Integer postId, Integer userId, String userRole)
         postRepository.save(post);
     }
 
-<<<<<<< HEAD
-    // Comments
-    public List<CommentEntity> getCommentsByPostId(int postId) {
-        return commentRepository.findByPostIdAndIsDeletedFalse(postId);
-    }
-
-    public CommentEntity addComment(CommentEntity comment, int postId) {
-        comment.setPostId(postId);
-        return commentRepository.save(comment);
-    }
-    
-    // Helper methods
-    private void updateUserPoints(int userId, int pointChange) {
-        if ("USER".equalsIgnoreCase(userRepository.findById(userId)
-                .map(UserEntity::getRole)  // Fixed: using getRole() instead of getUserRole()
-                .orElse(null))) {
-            UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-            user.setPoints(Math.max(0, user.getPoints() + pointChange));
-            userRepository.save(user);
-        }
-    }
-
-    private boolean isValidUserRole(String userRole) {
-        return userRole != null && 
-               (userRole.equalsIgnoreCase("USER") || 
-                userRole.equalsIgnoreCase("ADMIN") || 
-                userRole.equalsIgnoreCase("SUPERUSER"));
-=======
     // Comment operations
    public List<CommentEntity> getCommentsByPostId(int postId) {
     try {
@@ -635,6 +464,5 @@ public PostEntity handleDislike(Integer postId, Integer userId, String userRole)
             System.err.println("Error syncing post with report: " + e.getMessage());
             throw e;
         }
->>>>>>> Meow
     }
 }

@@ -36,22 +36,26 @@ public class SuperUserController {
     }
 
     // Password Reset Endpoints
+    // Password Reset Endpoints
     @PostMapping("/requestPasswordReset")
-    public ResponseEntity<?> requestPasswordReset(@RequestBody Map<String, String> requestBody) {
-        try {
-            String email = requestBody.get("email");
-            if (email == null || email.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Email is required");
-            }
-            String resetCode = superUserService.generatePasswordResetCode(email);
-            return ResponseEntity.ok().body("Reset code sent successfully to " + email);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with email not found");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error sending reset code: " + e.getMessage());
+public ResponseEntity<?> requestPasswordReset(@RequestBody Map<String, String> requestBody) {
+    try {
+        String email = requestBody.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Email is required");
         }
+ 
+        // Delegate reset code generation and processing to the service
+        superUserService.generatePasswordResetCode(email);
+ 
+        return ResponseEntity.ok().body("Reset code sent successfully to " + email);
+    } catch (NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with email not found");
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error sending reset code: " + e.getMessage());
     }
+}
 
     @PostMapping("/validateResetCode")
     public ResponseEntity<?> validateResetCode(@RequestBody Map<String, String> requestBody) {
