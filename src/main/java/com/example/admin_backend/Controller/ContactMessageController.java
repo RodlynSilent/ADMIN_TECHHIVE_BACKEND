@@ -13,7 +13,7 @@ import com.example.admin_backend.Service.ContactMessageService;
 
 @RestController
 @RequestMapping("/contact")
-@CrossOrigin(origins = "https://tech-hive-online.vercel.app")
+@CrossOrigin(origins = "http://localhost:3000")
 public class ContactMessageController {
     @Autowired
     private ContactMessageService contactMessageService;

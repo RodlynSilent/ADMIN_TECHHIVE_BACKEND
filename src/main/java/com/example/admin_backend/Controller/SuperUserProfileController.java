@@ -25,7 +25,7 @@ import com.example.admin_backend.Repository.SuperUserRepository;
 import com.example.admin_backend.Service.SuperUserProfileService;
 
 @RestController
-@CrossOrigin(origins = "https://tech-hive-online.vercel.app")
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/superuser/profile")
 public class SuperUserProfileController {
 

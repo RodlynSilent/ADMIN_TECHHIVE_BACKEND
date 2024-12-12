@@ -15,7 +15,7 @@ import com.example.admin_backend.Service.CommentService;
 
 @RestController
 @RequestMapping("/comments")
-@CrossOrigin(origins = "https://tech-hive-online.vercel.app")
+@CrossOrigin(origins = "http://localhost:3000")
 public class CommentController {
 
     @Autowired

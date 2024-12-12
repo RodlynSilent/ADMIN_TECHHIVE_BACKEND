@@ -21,7 +21,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/user/reports")
-@CrossOrigin(origins = "https://tech-hive-online.vercel.app")
+@CrossOrigin(origins = "http://localhost:3000")
 public class UserReportController {
 
     private final UserReportService userReportService;
