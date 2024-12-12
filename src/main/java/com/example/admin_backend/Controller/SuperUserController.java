@@ -15,7 +15,7 @@ import com.example.admin_backend.Service.SuperUserService;
 
 @RestController
 @RequestMapping("/superuser")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "https://tech-hive-online.vercel.app", allowCredentials = "true")
 public class SuperUserController {
 
     private static final String SESSION_USER_KEY = "superuser";
